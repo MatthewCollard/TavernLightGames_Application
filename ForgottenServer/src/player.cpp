@@ -1,21 +1,5 @@
-/**
- * The Forgotten Server - a free and open-source MMORPG server emulator
- * Copyright (C) 2019 Mark Samman <mark.samman@gmail.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Copyright 2022 The Forgotten Server Authors. All rights reserved.
+// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
 
 #include "otpch.h"
 
@@ -506,8 +490,8 @@ void Player::removeSkillTries(skills_t skill, uint64_t count, bool notify/* = fa
 	while (count > skills[skill].tries) {
 		count -= skills[skill].tries;
 
-		if (skills[skill].level <= 10) {
-			skills[skill].level = 10;
+		if (skills[skill].level <= MINIMUM_SKILL_LEVEL) {
+			skills[skill].level = MINIMUM_SKILL_LEVEL;
 			skills[skill].tries = 0;
 			count = 0;
 			break;
@@ -2030,7 +2014,7 @@ void Player::death(Creature* lastHitCreature)
 		//Skill loss
 		for (uint8_t i = SKILL_FIRST; i <= SKILL_LAST; ++i) { //for each skill
 			uint64_t sumSkillTries = 0;
-			for (uint16_t c = 11; c <= skills[i].level; ++c) { //sum up all required tries for all skill levels
+			for (uint16_t c = MINIMUM_SKILL_LEVEL + 1; c <= skills[i].level; ++c) { //sum up all required tries for all skill levels
 				sumSkillTries += vocation->getReqSkillTries(i, c);
 			}
 
@@ -2350,7 +2334,7 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 		return RETURNVALUE_ITEMCANNOTBEMOVEDTHERE;
 	}
 
-	ReturnValue ret = RETURNVALUE_NOERROR;
+	ReturnValue ret = RETURNVALUE_NOTPOSSIBLE;
 
 	const int32_t& slotPosition = item->getSlotPosition();
 	if ((slotPosition & SLOTP_HEAD) || (slotPosition & SLOTP_NECKLACE) ||
@@ -2448,7 +2432,7 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 			if (slotPosition & SLOTP_LEFT) {
 				if (!g_config.getBoolean(ConfigManager::CLASSIC_EQUIPMENT_SLOTS)) {
 					WeaponType_t type = item->getWeaponType();
-					if (type == WEAPON_NONE || type == WEAPON_SHIELD) {
+					if (type == WEAPON_NONE || type == WEAPON_SHIELD || type == WEAPON_AMMO) {
 						ret = RETURNVALUE_CANNOTBEDRESSED;
 					} else if (inventory[CONST_SLOT_RIGHT] && (slotPosition & SLOTP_TWO_HAND)) {
 						ret = RETURNVALUE_BOTHHANDSNEEDTOBEFREE;
@@ -2532,9 +2516,11 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 		return RETURNVALUE_NOTENOUGHCAPACITY;
 	}
 
-	ret = g_moveEvents->onPlayerEquip(const_cast<Player*>(this), const_cast<Item*>(item), static_cast<slots_t>(index), true);
-	if (ret != RETURNVALUE_NOERROR) {
-		return ret;
+	if (index != CONST_SLOT_WHEREEVER && index != -1) { // we don't try to equip whereever call
+		ret = g_moveEvents->onPlayerEquip(const_cast<Player*>(this), const_cast<Item*>(item), static_cast<slots_t>(index), true);
+		if (ret != RETURNVALUE_NOERROR) {
+			return ret;
+		}
 	}
 
 	//need an exchange with source? (destination item is swapped with currently moved item)
@@ -3857,7 +3843,7 @@ Skulls_t Player::getSkullClient(const Creature* creature) const
 		return SKULL_YELLOW;
 	}
 
-	if (isPartner(player)) {
+	if (party && party == player->party) {
 		return SKULL_GREEN;
 	}
 	return Creature::getSkullClient(creature);

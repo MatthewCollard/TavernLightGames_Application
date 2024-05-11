@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-project(tfs)
+project(tfs CXX)
 
 add_subdirectory(src)
 add_executable(tfs ${tfs_SRC})
@@ -23,15 +23,16 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     add_compile_options(-fno-strict-aliasing)
 endif ()
 
-# Find packages.
-find_package(CryptoPP QUIET)
-if (CryptoPP_FOUND)  # vcpkg-provided cmake package called CryptoPP
-    set(Crypto++_LIBRARIES "cryptopp-static")
-else()
-    find_package(Crypto++ REQUIRED)
-endif ()
-find_package(fmt 6.1.2 REQUIRED)
 
+find_package(OpenSSL 3.0.0 REQUIRED COMPONENTS Crypto)
+# Find packages.
+#find_package(CryptoPP QUIET)
+#if (CryptoPP_FOUND)  # vcpkg-provided cmake package called CryptoPP
+#    set(Crypto++_LIBRARIES "cryptopp-static")
+#else()
+#    find_package(Crypto++ REQUIRED)
+#endif ()
+find_package(fmt 6.1.2 REQUIRED)
 # Look for vcpkg-provided libmariadb first
 # If we link to the file directly, we might miss its dependencies from vcpkg
 find_package(unofficial-libmariadb CONFIG QUIET)
@@ -63,7 +64,7 @@ endif ()
 
 find_package(Boost 1.66.0 REQUIRED COMPONENTS date_time system filesystem iostreams)
 
-include_directories(${Boost_INCLUDE_DIRS} ${Crypto++_INCLUDE_DIR} ${LUA_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${PUGIXML_INCLUDE_DIR})
+include_directories(${Boost_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${LUA_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${PUGIXML_INCLUDE_DIR})
 target_link_libraries(tfs PRIVATE
         Boost::date_time
         Boost::system

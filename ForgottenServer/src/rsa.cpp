@@ -1,83 +1,59 @@
-/**
- * The Forgotten Server - a free and open-source MMORPG server emulator
- * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Copyright 2022 The Forgotten Server Authors. All rights reserved.
+// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
 
 #include "otpch.h"
 
 #include "rsa.h"
 
-#include <cryptopp/base64.h>
-#include <cryptopp/osrng.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
 
 #include <fstream>
 #include <sstream>
+#include <fmt/format.h>
 
-static CryptoPP::AutoSeededRandomPool prng;
+namespace {
 
-void RSA::decrypt(char* msg) const
-{
-	try {
-		CryptoPP::Integer m{reinterpret_cast<uint8_t*>(msg), 128};
-		auto c = pk.CalculateInverse(prng, m);
-		c.Encode(reinterpret_cast<uint8_t*>(msg), 128);
-	} catch (const CryptoPP::Exception& e) {
-		std::cout << e.what() << '\n';
-	}
+	struct Deleter
+	{
+		void operator()(BIO* bio) const { BIO_free(bio); }
+		void operator()(EVP_PKEY* pkey) const { EVP_PKEY_free(pkey); }
+		void operator()(EVP_PKEY_CTX* ctx) const { EVP_PKEY_CTX_free(ctx); }
+	};
+	template <class T>
+	using C_ptr = std::unique_ptr<T, Deleter>;
+
+	C_ptr<EVP_PKEY> pkey = nullptr;
 }
 
-static const std::string header = "-----BEGIN RSA PRIVATE KEY-----";
-static const std::string footer = "-----END RSA PRIVATE KEY-----";
+namespace tfs::rsa {
 
-void RSA::loadPEM(const std::string& filename)
-{
-	std::ifstream file{filename};
+	void decrypt(uint8_t* msg, size_t len)
+	{
+		C_ptr<EVP_PKEY_CTX> pctx{ EVP_PKEY_CTX_new_from_pkey(nullptr, pkey.get(), nullptr) };
+		EVP_PKEY_decrypt_init(pctx.get());
+		EVP_PKEY_CTX_set_rsa_padding(pctx.get(), RSA_NO_PADDING);
 
-	if (!file.is_open()) {
-		throw std::runtime_error("Missing file " + filename + ".");
- 	}
-
-	std::ostringstream oss;
-	for (std::string line; std::getline(file, line); oss << line);
-	std::string key = oss.str();
-
-	if (key.substr(0, header.size()) != header) {
-		throw std::runtime_error("Missing RSA private key header.");
+		EVP_PKEY_decrypt(pctx.get(), msg, &len, msg, len);
 	}
 
-	if (key.substr(key.size() - footer.size(), footer.size()) != footer) {
-		throw std::runtime_error("Missing RSA private key footer.");
-	}
-
-	key = key.substr(header.size(), key.size() - footer.size());
-
-	CryptoPP::ByteQueue queue;
-	CryptoPP::Base64Decoder decoder;
-	decoder.Attach(new CryptoPP::Redirector(queue));
-	decoder.Put(reinterpret_cast<const uint8_t*>(key.c_str()), key.size());
-	decoder.MessageEnd();
-
-	try {
-		pk.BERDecodePrivateKey(queue, false, queue.MaxRetrievable());
-
-		if (!pk.Validate(prng, 3)) {
-			throw std::runtime_error("RSA private key is not valid.");
+	EVP_PKEY* loadPEM(std::string_view pem)
+	{
+		C_ptr<BIO> bio{ BIO_new(BIO_s_mem()) };
+		if (!BIO_write(bio.get(), pem.data(), pem.size())) {
+			throw std::runtime_error(
+				fmt::format("Error while reading PEM data: {}", ERR_error_string(ERR_get_error(), nullptr)));
 		}
-	} catch (const CryptoPP::Exception& e) {
-		std::cout << e.what() << '\n';
+
+		EVP_PKEY* pkey_ = nullptr;
+		if (!PEM_read_bio_PrivateKey(bio.get(), &pkey_, nullptr, nullptr)) {
+			throw std::runtime_error(
+				fmt::format("Error while reading private key: {}", ERR_error_string(ERR_get_error(), nullptr)));
+		}
+
+		pkey.reset(pkey_);
+		return pkey_;
 	}
-}
+
+} // namespace tfs::rsa

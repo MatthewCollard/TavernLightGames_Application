@@ -41,7 +41,7 @@ function Player:onMoveItem(item, count, fromPosition, toPosition, fromCylinder, 
 	if hasEventCallback(EVENT_CALLBACK_ONMOVEITEM) then
 		return EventCallback(EVENT_CALLBACK_ONMOVEITEM, self, item, count, fromPosition, toPosition, fromCylinder, toCylinder)
 	end
-	return true
+	return RETURNVALUE_NOERROR
 end
 
 function Player:onItemMoved(item, count, fromPosition, toPosition, fromCylinder, toCylinder)
@@ -108,6 +108,10 @@ local function useStamina(player)
 	end
 
 	local playerId = player:getId()
+	if not nextUseStaminaTime[playerId] then
+		nextUseStaminaTime[playerId] = 0
+	end
+
 	local currentTime = os.time()
 	local timePassed = currentTime - nextUseStaminaTime[playerId]
 	if timePassed <= 0 then

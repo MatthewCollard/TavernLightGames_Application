@@ -1,21 +1,5 @@
-/**
- * The Forgotten Server - a free and open-source MMORPG server emulator
- * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Copyright 2022 The Forgotten Server Authors. All rights reserved.
+// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
 
 #ifndef FS_LUASCRIPT_H_5344B2BC907E46E3943EA78574A212D8
 #define FS_LUASCRIPT_H_5344B2BC907E46E3943EA78574A212D8
@@ -40,6 +24,7 @@
 #include "enums.h"
 #include "position.h"
 #include "outfit.h"
+#include <fmt/format.h>
 
 class Thing;
 class Creature;
@@ -292,12 +277,31 @@ class LuaScriptInterface
 		{
 			return static_cast<T>(static_cast<int64_t>(lua_tonumber(L, arg)));
 		}
+
 		template<typename T>
-		static typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, T>::type
+		static typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value, T>::type
 			getNumber(lua_State* L, int32_t arg)
 		{
-			return static_cast<T>(lua_tonumber(L, arg));
+			double num = lua_tonumber(L, arg);
+			if (num < static_cast<double>(std::numeric_limits<T>::lowest()) || num > static_cast<double>(std::numeric_limits<T>::max())) {
+				reportErrorFunc(L, fmt::format("Argument {} has out-of-range value for {}: {}", arg, typeid(T).name(), num));
+			}
+
+			return static_cast<T>(num);
 		}
+
+		template<typename T>
+		static typename std::enable_if<(std::is_integral<T>::value && (std::is_signed<T>::value) || std::is_floating_point<T>::value), T>::type
+			getNumber(lua_State* L, int32_t arg)
+		{
+			double num = lua_tonumber(L, arg);
+			if (num < static_cast<double>(std::numeric_limits<T>::lowest()) || num > static_cast<double>(std::numeric_limits<T>::max())) {
+				reportErrorFunc(L, fmt::format("Argument {} has out-of-range value for {}: {}", arg, typeid(T).name(), num));
+			}
+
+			return static_cast<T>(num);
+		}
+
 		template<typename T>
 		static T getNumber(lua_State *L, int32_t arg, T defaultValue)
 		{

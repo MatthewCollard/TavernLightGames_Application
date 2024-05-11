@@ -1,21 +1,5 @@
-/**
- * The Forgotten Server - a free and open-source MMORPG server emulator
- * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Copyright 2022 The Forgotten Server Authors. All rights reserved.
+// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
 
 #include "otpch.h"
 
@@ -616,6 +600,11 @@ bool Game::removeCreature(Creature* creature, bool isLogout/* = true*/)
 		spectator->onRemoveCreature(creature, isLogout);
 	}
 
+	Creature* master = creature->getMaster();
+	if (master && !master->isRemoved()) {
+		creature->setMaster(nullptr);
+	}
+
 	creature->getParent()->postRemoveNotification(creature, nullptr, 0);
 
 	creature->removeList();
@@ -806,7 +795,7 @@ ReturnValue Game::internalMoveCreature(Creature* creature, Direction direction, 
 			Tile* tmpTile = map.getTile(currentPos.x, currentPos.y, currentPos.getZ() - 1);
 			if (tmpTile == nullptr || (tmpTile->getGround() == nullptr && !tmpTile->hasFlag(TILESTATE_BLOCKSOLID))) {
 				tmpTile = map.getTile(destPos.x, destPos.y, destPos.getZ() - 1);
-				if (tmpTile && tmpTile->getGround() && !tmpTile->hasFlag(TILESTATE_BLOCKSOLID)) {
+				if (tmpTile && tmpTile->getGround() && !tmpTile->hasFlag(TILESTATE_IMMOVABLEBLOCKSOLID)) {
 					flags |= FLAG_IGNOREBLOCKITEM | FLAG_IGNOREBLOCKCREATURE;
 
 					if (!tmpTile->hasFlag(TILESTATE_FLOORCHANGE)) {
@@ -822,7 +811,7 @@ ReturnValue Game::internalMoveCreature(Creature* creature, Direction direction, 
 			Tile* tmpTile = map.getTile(destPos.x, destPos.y, destPos.z);
 			if (tmpTile == nullptr || (tmpTile->getGround() == nullptr && !tmpTile->hasFlag(TILESTATE_BLOCKSOLID))) {
 				tmpTile = map.getTile(destPos.x, destPos.y, destPos.z + 1);
-				if (tmpTile && tmpTile->hasHeight(3)) {
+				if (tmpTile && tmpTile->hasHeight(3) && !tmpTile->hasFlag(TILESTATE_IMMOVABLEBLOCKSOLID)) {
 					flags |= FLAG_IGNOREBLOCKITEM | FLAG_IGNOREBLOCKCREATURE;
 					player->setDirection(direction);
 					destPos.z++;
@@ -1078,8 +1067,9 @@ ReturnValue Game::internalMoveItem(Cylinder* fromCylinder, Cylinder* toCylinder,
 {
 	Player* actorPlayer = actor ? actor->getPlayer() : nullptr;
 	if (actorPlayer && fromPos && toPos) {
-		if (!g_events->eventPlayerOnMoveItem(actorPlayer, item, count, *fromPos, *toPos, fromCylinder, toCylinder)) {
-			return RETURNVALUE_NOTPOSSIBLE;
+		const ReturnValue ret = g_events->eventPlayerOnMoveItem(actorPlayer, item, count, *fromPos, *toPos, fromCylinder, toCylinder);
+		if (ret != RETURNVALUE_NOERROR) {
+			return ret;
 		}
 	}
 
@@ -1098,7 +1088,6 @@ ReturnValue Game::internalMoveItem(Cylinder* fromCylinder, Cylinder* toCylinder,
 
 	while ((subCylinder = toCylinder->queryDestination(index, *item, &toItem, flags)) != toCylinder) {
 		toCylinder = subCylinder;
-		flags = 0;
 
 		//to prevent infinite loop
 		if (++floorN >= MAP_MAX_LAYERS) {
@@ -1117,8 +1106,11 @@ ReturnValue Game::internalMoveItem(Cylinder* fromCylinder, Cylinder* toCylinder,
 		//check if we can add it to source cylinder
 		ret = fromCylinder->queryAdd(fromCylinder->getThingIndex(item), *toItem, toItem->getItemCount(), 0);
 		if (ret == RETURNVALUE_NOERROR) {
-			if (actorPlayer && fromPos && toPos && !g_events->eventPlayerOnMoveItem(actorPlayer, toItem, count, *toPos, *fromPos, toCylinder, fromCylinder)) {
-				return RETURNVALUE_NOTPOSSIBLE;
+			if (actorPlayer && fromPos && toPos) {
+				const ReturnValue eventRet = g_events->eventPlayerOnMoveItem(actorPlayer, toItem, toItem->getItemCount(), *toPos, *fromPos, toCylinder, fromCylinder);
+				if (eventRet != RETURNVALUE_NOERROR) {
+					return eventRet;
+				}
 			}
 
 			//check how much we can move
@@ -1144,6 +1136,11 @@ ReturnValue Game::internalMoveItem(Cylinder* fromCylinder, Cylinder* toCylinder,
 				}
 
 				ret = toCylinder->queryAdd(index, *item, count, flags);
+
+				if (actorPlayer && fromPos && toPos && !toItem->isRemoved()) {
+					g_events->eventPlayerOnItemMoved(actorPlayer, toItem, toItem->getItemCount(), *toPos, *fromPos, toCylinder, fromCylinder);
+				}
+
 				toItem = nullptr;
 			}
 		}
@@ -1265,7 +1262,13 @@ ReturnValue Game::internalMoveItem(Cylinder* fromCylinder, Cylinder* toCylinder,
 	}
 
 	if (actorPlayer && fromPos && toPos) {
-		g_events->eventPlayerOnItemMoved(actorPlayer, item, count, *fromPos, *toPos, fromCylinder, toCylinder);
+		if (updateItem && !updateItem->isRemoved()) {
+			g_events->eventPlayerOnItemMoved(actorPlayer, updateItem, count, *fromPos, *toPos, fromCylinder, toCylinder);
+		} else if (moveItem && !moveItem->isRemoved()) {
+			g_events->eventPlayerOnItemMoved(actorPlayer, moveItem, count, *fromPos, *toPos, fromCylinder, toCylinder);
+		} else if (item && !item->isRemoved()) {
+			g_events->eventPlayerOnItemMoved(actorPlayer, item, count, *fromPos, *toPos, fromCylinder, toCylinder);
+		}
 	}
 
 	return ret;
@@ -2627,10 +2630,9 @@ void Game::playerRequestTrade(uint32_t playerId, const Position& pos, uint8_t st
 	}
 
 	if (g_config.getBoolean(ConfigManager::ONLY_INVITED_CAN_MOVE_HOUSE_ITEMS)) {
-		if (HouseTile* houseTile = dynamic_cast<HouseTile*>(tradeItem->getTile())) {
-			House* house = houseTile->getHouse();
-			if (house && !house->isInvited(player)) {
-				player->sendCancelMessage(RETURNVALUE_NOTPOSSIBLE);
+		if (const HouseTile* const houseTile = dynamic_cast<const HouseTile*>(tradeItem->getTile())) {
+			if (!tradeItem->getTopParent()->getCreature() && !houseTile->getHouse()->isInvited(player)) {
+				player->sendCancelMessage(RETURNVALUE_PLAYERISNOTINVITED);
 				return;
 			}
 		}
@@ -2801,6 +2803,11 @@ void Game::playerAcceptTrade(uint32_t playerId)
 			playerRet = (player->getInventoryItem(getSlotType(Item::items[partnerTradeItem->getID()])) ? RETURNVALUE_NOTENOUGHROOM : RETURNVALUE_NOERROR);
 		}
 
+		// both players try to trade equipped backpacks
+		if (player->getInventoryItem(CONST_SLOT_BACKPACK) == playerTradeItem && tradePartner->getInventoryItem(CONST_SLOT_BACKPACK) == partnerTradeItem) {
+			playerRet = RETURNVALUE_NOTENOUGHROOM;
+		}
+		
 		if (tradePartnerRet == RETURNVALUE_NOERROR && playerRet == RETURNVALUE_NOERROR) {
 			tradePartnerRet = internalAddItem(tradePartner, playerTradeItem, INDEX_WHEREEVER, 0, true);
 			playerRet = internalAddItem(player, partnerTradeItem, INDEX_WHEREEVER, 0, true);
@@ -3614,7 +3621,7 @@ bool Game::internalCreatureTurn(Creature* creature, Direction dir)
 }
 
 bool Game::internalCreatureSay(Creature* creature, SpeakClasses type, const std::string& text,
-                               bool ghostMode, SpectatorVec* spectatorsPtr/* = nullptr*/, const Position* pos/* = nullptr*/)
+                               bool ghostMode, SpectatorVec* spectatorsPtr/* = nullptr*/, const Position* pos/* = nullptr*/, bool echo/* = false*/)
 {
 	if (text.empty()) {
 		return false;
@@ -3652,10 +3659,12 @@ bool Game::internalCreatureSay(Creature* creature, SpeakClasses type, const std:
 	}
 
 	//event method
-	for (Creature* spectator : spectators) {
-		spectator->onCreatureSay(creature, type, text);
-		if (creature != spectator) {
-			g_events->eventCreatureOnHear(spectator, creature, text, type);
+	if (!echo) {
+		for (Creature* spectator : spectators) {
+			spectator->onCreatureSay(creature, type, text);
+			if (creature != spectator) {
+				g_events->eventCreatureOnHear(spectator, creature, text, type);
+			}
 		}
 	}
 	return true;
@@ -4408,8 +4417,8 @@ void Game::addMagicEffect(const SpectatorVec& spectators, const Position& pos, u
 void Game::addDistanceEffect(const Position& fromPos, const Position& toPos, uint8_t effect)
 {
 	SpectatorVec spectators, toPosSpectators;
-	map.getSpectators(spectators, fromPos, false, true);
-	map.getSpectators(toPosSpectators, toPos, false, true);
+	map.getSpectators(spectators, fromPos, true, true);
+	map.getSpectators(toPosSpectators, toPos, true, true);
 	spectators.addSpectators(toPosSpectators);
 
 	addDistanceEffect(spectators, fromPos, toPos, effect);
@@ -4572,11 +4581,15 @@ void Game::checkDecay()
 void Game::checkLight()
 {
 	g_scheduler.addEvent(createSchedulerTask(EVENT_LIGHTINTERVAL, std::bind(&Game::checkLight, this)));
+	uint8_t previousLightLevel = lightLevel;
 	updateWorldLightLevel();
-	LightInfo lightInfo = getWorldLightInfo();
+	
+	if (previousLightLevel != lightLevel) {
+		LightInfo lightInfo = getWorldLightInfo();
 
-	for (const auto& it : players) {
-		it.second->sendWorldLight(lightInfo);
+		for (const auto& it : players) {
+			it.second->sendWorldLight(lightInfo);
+		}
 	}
 }
 

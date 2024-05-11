@@ -1,0 +1,8 @@
+Package: boost-array
+Version: 1.84.0
+Depends: boost-assert, boost-config, boost-core, boost-static-assert, boost-throw-exception, boost-vcpkg-helpers
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 7a3f8a00fe38cc7b71103e2978d1fbdd8ed1df6c843e538f96a9ee7616ceafe4
+Description: Boost array module
+Status: install ok installed

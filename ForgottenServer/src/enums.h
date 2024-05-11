@@ -1,21 +1,5 @@
-/**
- * The Forgotten Server - a free and open-source MMORPG server emulator
- * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Copyright 2022 The Forgotten Server Authors. All rights reserved.
+// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
 
 #ifndef FS_ENUMS_H_003445999FEE4A67BCECBE918B0124CE
 #define FS_ENUMS_H_003445999FEE4A67BCECBE918B0124CE
@@ -519,19 +503,13 @@ struct LightInfo {
 };
 
 struct ShopInfo {
-	uint16_t itemId;
-	int32_t subType;
-	uint32_t buyPrice;
-	uint32_t sellPrice;
-	std::string realName;
+	uint16_t itemId = 0;
+	int32_t subType = 1;
+	uint32_t buyPrice = 0;
+	uint32_t sellPrice = 0;
+	std::string realName = "";
 
-	ShopInfo() {
-		itemId = 0;
-		subType = 1;
-		buyPrice = 0;
-		sellPrice = 0;
-	}
-
+	ShopInfo() = default;
 	ShopInfo(uint16_t itemId, int32_t subType = 0, uint32_t buyPrice = 0, uint32_t sellPrice = 0, std::string realName = "")
 		: itemId(itemId), subType(subType), buyPrice(buyPrice), sellPrice(sellPrice), realName(std::move(realName)) {}
 };
@@ -572,17 +550,10 @@ struct HistoryMarketOffer {
 };
 
 struct MarketStatistics {
-	MarketStatistics() {
-		numTransactions = 0;
-		highestPrice = 0;
-		totalPrice = 0;
-		lowestPrice = 0;
-	}
-
-	uint32_t numTransactions;
-	uint32_t highestPrice;
-	uint64_t totalPrice;
-	uint32_t lowestPrice;
+	uint32_t numTransactions = 0;
+	uint32_t highestPrice = 0;
+	uint64_t totalPrice = 0;
+	uint32_t lowestPrice = 0;
 };
 
 struct ModalWindow
@@ -590,11 +561,10 @@ struct ModalWindow
 	std::list<std::pair<std::string, uint8_t>> buttons, choices;
 	std::string title, message;
 	uint32_t id;
-	uint8_t defaultEnterButton, defaultEscapeButton;
-	bool priority;
+	uint8_t defaultEnterButton = 0xFF, defaultEscapeButton = 0xFF;
+	bool priority = false;
 
-	ModalWindow(uint32_t id, std::string title, std::string message)
-		: title(std::move(title)), message(std::move(message)), id(id), defaultEnterButton(0xFF), defaultEscapeButton(0xFF), priority(false) {}
+	ModalWindow(uint32_t id, std::string title, std::string message): title(std::move(title)), message(std::move(message)), id(id) {}
 };
 
 enum CombatOrigin
@@ -609,23 +579,14 @@ enum CombatOrigin
 struct CombatDamage
 {
 	struct {
-		CombatType_t type;
-		int32_t value;
-	} primary, secondary;
+		CombatType_t type = COMBAT_NONE;
+		int32_t value = 0;
+	} primary = {}, secondary = {};
 
-	CombatOrigin origin;
-	BlockType_t blockType;
-	bool critical;
-	bool leeched;
-	CombatDamage()
-	{
-		origin = ORIGIN_NONE;
-		blockType = BLOCK_NONE;
-		primary.type = secondary.type = COMBAT_NONE;
-		primary.value = secondary.value = 0;
-		critical = false;
-		leeched = false;
-	}
+	CombatOrigin origin = ORIGIN_NONE;
+	BlockType_t blockType = BLOCK_NONE;
+	bool critical = false;
+	bool leeched = false;
 };
 
 using MarketOfferList = std::list<MarketOffer>;

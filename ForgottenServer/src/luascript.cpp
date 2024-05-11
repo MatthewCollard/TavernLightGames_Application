@@ -1,21 +1,5 @@
-/**
- * The Forgotten Server - a free and open-source MMORPG server emulator
- * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Copyright 2022 The Forgotten Server Authors. All rights reserved.
+// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
 
 #include "otpch.h"
 
@@ -88,7 +72,7 @@ void ScriptEnvironment::resetEnv()
 	auto it = pair.first;
 	while (it != pair.second) {
 		Item* item = it->second;
-		if (item->getParent() == VirtualCylinder::virtualCylinder) {
+		if (item && item->getParent() == VirtualCylinder::virtualCylinder) {
 			g_game.ReleaseItem(item);
 		}
 		it = tempItems.erase(it);
@@ -8011,10 +7995,13 @@ int LuaScriptInterface::luaCreatureSay(lua_State* L)
 		spectators.emplace_back(target);
 	}
 
+	// Prevent infinity echo on event onHear
+	bool echo = getScriptEnv()->getScriptId() == g_events->getScriptId(EventInfoId::CREATURE_ONHEAR);
+
 	if (position.x != 0) {
-		pushBoolean(L, g_game.internalCreatureSay(creature, type, text, ghost, &spectators, &position));
+		pushBoolean(L, g_game.internalCreatureSay(creature, type, text, ghost, &spectators, &position, echo));
 	} else {
-		pushBoolean(L, g_game.internalCreatureSay(creature, type, text, ghost, &spectators));
+		pushBoolean(L, g_game.internalCreatureSay(creature, type, text, ghost, &spectators, nullptr, echo));
 	}
 	return 1;
 }
@@ -9239,7 +9226,7 @@ int LuaScriptInterface::luaPlayerAddItem(lua_State* L)
 
 	int32_t itemCount = 1;
 	int parameters = lua_gettop(L);
-	if (parameters >= 4) {
+	if (parameters >= 5) {
 		itemCount = std::max<int32_t>(1, count);
 	} else if (it.hasSubType()) {
 		if (it.stackable) {
@@ -9455,7 +9442,9 @@ int LuaScriptInterface::luaPlayerShowTextDialog(lua_State* L)
 	}
 
 	item->setParent(player);
-	player->setWriteItem(item, length);
+	player->windowTextId++;
+	player->writeItem = item;
+	player->maxWriteLen = length;
 	player->sendTextWindow(item, length, canWrite);
 	pushBoolean(L, true);
 	return 1;
@@ -13810,13 +13799,14 @@ int LuaScriptInterface::luaMonsterTypeGetSummonList(lua_State* L)
 
 int LuaScriptInterface::luaMonsterTypeAddSummon(lua_State* L)
 {
-	// monsterType:addSummon(name, interval, chance)
+	// monsterType:addSummon(name, interval, chance[, max = -1])
 	MonsterType* monsterType = getUserdata<MonsterType>(L, 1);
 	if (monsterType) {
 		summonBlock_t summon;
 		summon.name = getString(L, 2);
-		summon.chance = getNumber<int32_t>(L, 3);
-		summon.speed = getNumber<int32_t>(L, 4);
+		summon.speed = getNumber<int32_t>(L, 3);
+		summon.chance = getNumber<int32_t>(L, 4);
+		summon.max = getNumber<int32_t>(L, 5, -1);
 		monsterType->info.summons.push_back(summon);
 		pushBoolean(L, true);
 	} else {
@@ -16368,6 +16358,13 @@ int LuaScriptInterface::luaGlobalEventRegister(lua_State* L)
 			pushBoolean(L, false);
 			return 1;
 		}
+		
+		if (globalevent->getEventType() == GLOBALEVENT_NONE && globalevent->getInterval() == 0) {
+			std::cout << "[Error - LuaScriptInterface::luaGlobalEventRegister] No interval for globalevent with name " << globalevent->getName() << std::endl;
+			pushBoolean(L, false);
+			return 1;
+		}
+		
 		pushBoolean(L, g_globalEvents->registerLuaEvent(globalevent));
 	} else {
 		lua_pushnil(L);

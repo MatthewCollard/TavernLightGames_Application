@@ -1,21 +1,5 @@
-/**
- * The Forgotten Server - a free and open-source MMORPG server emulator
- * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Copyright 2022 The Forgotten Server Authors. All rights reserved.
+// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
 
 #ifndef FS_ITEM_H_009A319FB13D477D9EEFFBBD9BB83562
 #define FS_ITEM_H_009A319FB13D477D9EEFFBBD9BB83562
@@ -106,6 +90,11 @@ enum AttrTypes_t {
 	ATTR_WRAPID = 36,
 	ATTR_STOREITEM = 37,
 	ATTR_ATTACK_SPEED = 38,
+
+	// version 12.x
+	ATTR_OPENCONTAINER = 39,
+	ATTR_PODIUMOUTFIT = 40,
+	ATTR_TIER = 41,
 };
 
 enum Attr_ReadValue {
@@ -221,6 +210,14 @@ class ItemAttributes
 			VariantAttribute value;
 
 			CustomAttribute() : value(boost::blank()) {}
+
+			bool operator==(const CustomAttribute& otherAttr) const {
+				return value == otherAttr.value;
+			}
+
+			bool operator!=(const CustomAttribute& otherAttr) const {
+				return value != otherAttr.value;
+			}
 
 			template<typename T>
 			explicit CustomAttribute(const T& v) : value(v) {}

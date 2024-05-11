@@ -1,0 +1,132 @@
+{
+  "$schema": "https://raw.githubusercontent.com/spdx/spdx-spec/v2.2.1/schemas/spdx-schema.json",
+  "spdxVersion": "SPDX-2.2",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "documentNamespace": "https://spdx.org/spdxdocs/boost-asio-x64-windows-1.84.0-6af33595-d609-4d4c-8913-2a2d626b6750",
+  "name": "boost-asio:x64-windows@1.84.0 e11c2064360fbbb77c09f1dbd3a671f7574fa17dcc0646f63a441d57db4437cd",
+  "creationInfo": {
+    "creators": [
+      "Tool: vcpkg-d6945642ee5c3076addd1a42c331bbf4cfc97457"
+    ],
+    "created": "2024-05-11T00:08:41Z"
+  },
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "GENERATES",
+      "relatedSpdxElement": "SPDXRef-binary"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-0"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-1"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-2"
+    },
+    {
+      "spdxElementId": "SPDXRef-binary",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-0",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-1",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-2",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    }
+  ],
+  "packages": [
+    {
+      "name": "boost-asio",
+      "SPDXID": "SPDXRef-port",
+      "versionInfo": "1.84.0",
+      "downloadLocation": "git+https://github.com/Microsoft/vcpkg@7a9e250345837a2083dea856b1f4c74c4d664226",
+      "homepage": "https://github.com/boostorg/asio",
+      "licenseConcluded": "BSL-1.0",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "description": "Boost asio module",
+      "comment": "This is the port (recipe) consumed by vcpkg."
+    },
+    {
+      "name": "boost-asio:x64-windows",
+      "SPDXID": "SPDXRef-binary",
+      "versionInfo": "e11c2064360fbbb77c09f1dbd3a671f7574fa17dcc0646f63a441d57db4437cd",
+      "downloadLocation": "NONE",
+      "licenseConcluded": "BSL-1.0",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "This is a binary package built by vcpkg."
+    },
+    {
+      "SPDXID": "SPDXRef-resource-1",
+      "name": "boostorg/asio",
+      "downloadLocation": "git+https://github.com/boostorg/asio@boost-1.84.0",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "88d1d8d1bbea29149d9747ab9ccb99a7bfbd928f8ed1aff90adb6382fcefd32dc9687e6832f8ac21ddf918f0608623aa123d7943aa5f697a6b946fe2311e05f6"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "fileName": "./D:/TavernLight/vcpkg/buildtrees/versioning_/versions/boost-asio/7a9e250345837a2083dea856b1f4c74c4d664226/portfile.cmake",
+      "SPDXID": "SPDXRef-file-0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9659a4b6ab5cbb20720ad827f996cad8702363be5730d54954b4ede844b81d44"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./D:/TavernLight/vcpkg/buildtrees/versioning_/versions/boost-asio/7a9e250345837a2083dea856b1f4c74c4d664226/vcpkg.json",
+      "SPDXID": "SPDXRef-file-1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "95c5f64680acf118e76df806b31d3e0fc06aef4e3a1952cf8b3a357c09b3ca4d"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./D:/TavernLight/vcpkg/buildtrees/versioning_/versions/boost-asio/7a9e250345837a2083dea856b1f4c74c4d664226/windows_alloca_header.patch",
+      "SPDXID": "SPDXRef-file-2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "660780f22547aafc822714dc55e6bead728c86df831718da1a8854fc6c339466"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    }
+  ]
+}

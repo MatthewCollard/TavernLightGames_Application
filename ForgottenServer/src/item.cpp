@@ -1,21 +1,5 @@
-/**
- * The Forgotten Server - a free and open-source MMORPG server emulator
- * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
+// Copyright 2022 The Forgotten Server Authors. All rights reserved.
+// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
 
 #include "otpch.h"
 
@@ -210,7 +194,13 @@ bool Item::equals(const Item* otherItem) const
 	const auto& attributeList = attributes->attributes;
 	const auto& otherAttributeList = otherAttributes->attributes;
 	for (const auto& attribute : attributeList) {
-		if (ItemAttributes::isStrAttrType(attribute.type)) {
+		if (ItemAttributes::isIntAttrType(attribute.type)) {
+			for (const auto& otherAttribute : otherAttributeList) {
+				if (attribute.type == otherAttribute.type && attribute.value.integer != otherAttribute.value.integer) {
+					return false;
+				}
+			}
+		} else if (ItemAttributes::isStrAttrType(attribute.type)) {
 			for (const auto& otherAttribute : otherAttributeList) {
 				if (attribute.type == otherAttribute.type && *attribute.value.string != *otherAttribute.value.string) {
 					return false;
@@ -218,7 +208,7 @@ bool Item::equals(const Item* otherItem) const
 			}
 		} else {
 			for (const auto& otherAttribute : otherAttributeList) {
-				if (attribute.type == otherAttribute.type && attribute.value.integer != otherAttribute.value.integer) {
+				if (attribute.type == otherAttribute.type && *attribute.value.custom != *otherAttribute.value.custom) {
 					return false;
 				}
 			}
@@ -613,6 +603,22 @@ Attr_ReadValue Item::readAttr(AttrTypes_t attr, PropStream& propStream)
 			}
 
 			setIntAttr(ITEM_ATTRIBUTE_STOREITEM, storeItem);
+			break;
+		}
+
+		//12+ compatibility
+		case ATTR_OPENCONTAINER:
+		case ATTR_TIER: {
+			if (!propStream.skip(1)) {
+				return ATTR_READ_ERROR;
+			}
+			break;
+		}
+
+		case ATTR_PODIUMOUTFIT: {
+			if (!propStream.skip(15)) {
+				return ATTR_READ_ERROR;
+			}
 			break;
 		}
 
