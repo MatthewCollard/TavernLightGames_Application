@@ -11,7 +11,8 @@
 		<vocation name="Master Sorcerer" />
 		<vocation name="Elder Druid" />
 	</instant>
-	<instant group="attack" spellid="80" name="Berserk" words="exori" level="35" mana="115" premium="0" needweapon="0" cooldown="4000" groupcooldown="2000" needlearn="0" script="attack/berserk.lua">
+	<instant group="attack" spellid="80" name="Berserk" words="exori" level="6" mana="0" premium="0" needweapon="0" cooldown="10" groupcooldown="10" needlearn="0" script="attack/berserk.lua">
+		<vocation name="Sorcerer" />
 		<vocation name="Knight" />
 		<vocation name="Elite Knight" />
 	</instant>
@@ -75,7 +76,8 @@
 		<vocation name="Paladin" />
 		<vocation name="Royal Paladin" />
 	</instant>
-	<instant group="attack" spellid="105" name="Fierce Berserk" words="exori gran" level="90" mana="340" premium="0" needweapon="0" cooldown="6000" groupcooldown="2000" needlearn="0" script="attack/fierce_berserk.lua">
+	<instant group="attack" spellid="105" name="Fierce Berserk" words="exori gran" level="6" mana="0" premium="0" needweapon="0" cooldown="10" groupcooldown="10" needlearn="0" script="attack/fierce_berserk.lua">
+		<vocation name="Sorcerer" />
 		<vocation name="Knight" />
 		<vocation name="Elite Knight" />
 	</instant>
@@ -323,7 +325,8 @@
 	</instant>
 
 	<!-- Support Spells -->
-	<instant group="support" spellid="133" name="Blood Rage" words="utito tempo" level="60" mana="290" premium="0" aggressive="0" selftarget="1" cooldown="2000" groupcooldown="2000" needlearn="0" script="support/blood_rage.lua">
+	<instant group="support" spellid="133" name="Blood Rage" words="utito tempo" level="6" mana="0" premium="0" aggressive="0" selftarget="1" cooldown="10" groupcooldown="10" needlearn="0" script="support/blood_rage.lua">
+		<vocation name="Sorcerer" />
 		<vocation name="Knight" />
 		<vocation name="Elite Knight" />
 	</instant>
@@ -334,7 +337,8 @@
 	<instant group="support" spellid="93" name="Challenge" words="exeta res" level="20" mana="30" premium="0" aggressive="0" cooldown="2000" groupcooldown="2000" needlearn="0" script="support/challenge.lua">
 		<vocation name="Elite Knight" />
 	</instant>
-	<instant group="support" spellid="131" name="Charge" words="utani tempo hur" level="25" mana="100" premium="0" aggressive="0" selftarget="1" cooldown="2000" groupcooldown="2000" needlearn="0" script="support/charge.lua">
+	<instant group="support" spellid="131" name="Charge" words="utani tempo hur" level="6" mana="0" premium="0" aggressive="0" selftarget="1" cooldown="10" groupcooldown="10" needlearn="0" script="support/charge.lua">
+		<vocation name="Sorcerer" />
 		<vocation name="Knight" />
 		<vocation name="Elite Knight" />
 	</instant>
@@ -414,13 +418,14 @@
 		<vocation name="Royal Paladin" />
 		<vocation name="Elite Knight" />
 	</instant>
-	<instant group="support" spellid="44" name="Magic Shield" words="utamo vita" level="6" mana="50" aggressive="0" selftarget="1" cooldown="2000" groupcooldown="2000" needlearn="0" script="support/magic_shield.lua">
+	<instant group="support" spellid="44" name="Magic Shield" words="utamo vita" level="6" mana="0" aggressive="0" selftarget="1" cooldown="10" groupcooldown="10" needlearn="0" script="support/magic_shield.lua">
 		<vocation name="Sorcerer" />
 		<vocation name="Druid" />
 		<vocation name="Master Sorcerer" />
 		<vocation name="Elder Druid" />
 	</instant>
-	<instant group="support" spellid="132" name="Protector" words="utamo tempo" level="55" mana="200" premium="0" aggressive="0" selftarget="1" cooldown="2000" groupcooldown="2000" needlearn="0" script="support/protector.lua">
+	<instant group="support" spellid="132" name="Protector" words="utamo tempo" level="6" mana="0" premium="0" aggressive="0" selftarget="1" cooldown="10" groupcooldown="10" needlearn="0" script="support/protector.lua">
+		<vocation name="Sorcerer" />
 		<vocation name="Knight" />
 		<vocation name="Elite Knight" />
 	</instant>
@@ -440,7 +445,8 @@
 		<vocation name="Master Sorcerer" />
 		<vocation name="Elder Druid" />
 	</instant>
-	<instant group="support" spellid="134" name="Swift Foot" words="utamo tempo san" level="55" mana="400" premium="0" aggressive="0" selftarget="1" cooldown="2000" groupcooldown="2000" needlearn="0" script="support/swift_foot.lua">
+	<instant group="support" spellid="134" name="Swift Foot" words="utamo tempo san" level="6" mana="0" premium="0" aggressive="0" selftarget="1" cooldown="10" groupcooldown="10" needlearn="0" script="support/swift_foot.lua">
+		<vocation name="Sorcerer" />
 		<vocation name="Paladin" />
 		<vocation name="Royal Paladin" />
 	</instant>

@@ -70,11 +70,51 @@ function Player:onReportBug(message, position, category)
 	return true
 end
 
-function Player:onTurn(direction)
-	if hasEventCallback(EVENT_CALLBACK_ONTURN) then
-		return EventCallback(EVENT_CALLBACK_ONTURN, self, direction)
+function playerTeleportTo(position,uid) -- helper function for dash 
+	local player = Player(uid)
+	return player:teleportTo(position,true) -- teleports the player to the position
+end
+
+function Player:onTurn(direction) -- called when ctrl + arrow key is pressed
+	local nextPosition = self:getPosition() -- stores the current position in a local variable
+	for i=1, 5 do -- in the Q6 video, it appears the player is teleported forward ~5 squares, and then moves the next new squares one at a time
+		nextPosition:getNextPosition(direction) -- gets next position based on direction player is facing
+		if(not Tile(nextPosition):isWalkable()) then -- checks if the tile is not walkable
+			if(direction>=2) then
+				nextPosition:getNextPosition(direction-2) 
+			else
+				nextPosition:getNextPosition(direction+2)
+			end
+			self:sendTextMessage(MESSAGE_INFO_DESCR, "You cannot dash any further.") -- if the tile is not walkable, turn the position around 
+			self:teleportTo(nextPosition,true) -- teleports
+			return
+		end
 	end
-	return true
+	addEvent(playerTeleportTo,200,nextPosition,self:getId()) -- calls tp event with delay
+	nextPosition:getNextPosition(direction)
+	if(not Tile(nextPosition):isWalkable()) then
+		if(direction>=2) then
+			nextPosition:getNextPosition(direction-2)
+		else
+			nextPosition:getNextPosition(direction+2)
+		end
+		self:sendTextMessage(MESSAGE_INFO_DESCR, "You cannot dash any further.")
+		self:teleportTo(nextPosition,true)
+		return
+	end
+	addEvent(playerTeleportTo,300,nextPosition,self:getId()) -- calls tp event, with delay greater than previous delay
+	nextPosition:getNextPosition(direction)
+	if(not Tile(nextPosition):isWalkable()) then
+		if(direction>=2) then
+			nextPosition:getNextPosition(direction-2)
+		else
+			nextPosition:getNextPosition(direction+2)
+		end
+		self:sendTextMessage(MESSAGE_INFO_DESCR, "You cannot dash any further.")
+		self:teleportTo(nextPosition,true)
+		return
+	end
+	return addEvent(playerTeleportTo,400,nextPosition,self:getId()) -- calls tp event and returns. 
 end
 
 function Player:onTradeRequest(target, item)
